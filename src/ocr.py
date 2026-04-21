@@ -5,7 +5,7 @@ import torch
 class PlateOCR:
     def __init__(self):
 
-        use_gput = torch.cuda.isavailable()
+        use_gpu = torch.cuda.is_available()
         print(f"OCR GPU: {use_gpu}")
         self.reader = easyocr.Reader(['en'], gpu=False)
 
