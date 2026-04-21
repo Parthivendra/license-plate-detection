@@ -133,10 +133,6 @@ def main(limit=20, no_limit=False):
 
             writer.writerow([img_name, raw_joined, final_joined])
 
-            # Save image
-            output_img_path = os.path.join(OUTPUT_DIR, img_name)
-            cv2.imwrite(output_img_path, image)
-
     print(f"\n[INFO] Results saved to: {CSV_PATH}")
 
 
