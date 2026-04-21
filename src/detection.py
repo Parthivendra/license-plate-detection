@@ -1,27 +1,18 @@
 from ultralytics import YOLO
-import cv2
+import torch
 
 class PlateDetector:
     def __init__(self, model_path):
-        """
-        Initialize the YOLO model
-        """
+        self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        print(f"Using device: {self.device}")
+
         self.model = YOLO(model_path)
-        self.model.to("cuda")
+        self.model.to(self.device)
+
     def detect(self, image):
-        """
-        Detect license plates in an image
-
-        Args:
-            image: input image (numpy array)
-
-        Returns:
-            boxes: list of bounding boxes [x1, y1, x2, y2]
-        """
-        results = self.model(image)
+        results = self.model(image, device=self.device)
 
         boxes = []
-
         for result in results:
             for box in result.boxes:
                 x1, y1, x2, y2 = box.xyxy[0].tolist()

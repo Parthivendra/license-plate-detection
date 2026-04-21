@@ -1,11 +1,12 @@
 import easyocr
 import cv2
+import torch
 
 class PlateOCR:
     def __init__(self):
-        """
-        Initialize EasyOCR reader
-        """
+
+        use_gput = torch.cuda.isavailable()
+        print(f"OCR GPU: {use_gpu}")
         self.reader = easyocr.Reader(['en'], gpu=False)
 
     def extract_text(self, image):
