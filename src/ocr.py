@@ -7,7 +7,7 @@ class PlateOCR:
 
         use_gpu = torch.cuda.is_available()
         print(f"OCR GPU: {use_gpu}")
-        self.reader = easyocr.Reader(['en'], gpu=False)
+        self.reader = easyocr.Reader(['en'], gpu=use_gpu)
 
     def extract_text(self, image):
         """
