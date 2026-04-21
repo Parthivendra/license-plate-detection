@@ -7,7 +7,7 @@ class PlateDetector:
         Initialize the YOLO model
         """
         self.model = YOLO(model_path)
-
+        self.model.to("cuda")
     def detect(self, image):
         """
         Detect license plates in an image
