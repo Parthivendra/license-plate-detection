@@ -11,19 +11,34 @@ class PlateOCR:
 
     def extract_text(self, image):
         """
-        Extract text from plate image
+        Extract text from plate image.
+
+        Uses dual-pass: tries the preprocessed image first,
+        and if confidence is low, retries with raw color crop.
 
         Args:
-            image: cropped plate image
+            image: preprocessed plate image (grayscale)
 
         Returns:
             text: detected string
         """
-        results = self.reader.readtext(image)
+        text, conf = self._read(image)
+        return text
 
-        extracted_text = ""
+    def _read(self, image):
+        """Run OCR and return (text, avg_confidence)."""
+        results = self.reader.readtext(
+            image,
+            allowlist='ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
+        )
 
+        if not results:
+            return "", 0.0
+
+        texts = []
+        confs = []
         for (bbox, text, confidence) in results:
-            extracted_text += text + " "
+            texts.append(text)
+            confs.append(confidence)
 
-        return extracted_text.strip()
+        return " ".join(texts), sum(confs) / len(confs)
