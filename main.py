@@ -3,22 +3,19 @@ main.py
 
 Batch License Plate Detection + OCR Pipeline with Postprocessing.
 
-Pipeline:
----------
-Image → Detection → Crop → Preprocess → OCR → Postprocess → Save Results
+Default:
+    Runs on a random subset (20 images)
 
-Input:
-    ./data/input/
-
-Output:
-    ./data/output/
-        - annotated images
-        - results.csv
+Options:
+    --limit N     → run on N random images
+    --no-limit    → run on all images
 """
 
 import os
 import cv2
 import csv
+import random
+import argparse
 
 from src.detection import PlateDetector
 from src.ocr import PlateOCR
@@ -31,7 +28,7 @@ OUTPUT_DIR = "data/output"
 CSV_PATH = os.path.join(OUTPUT_DIR, "results.csv")
 
 
-def main():
+def main(limit=20, no_limit=False):
     # -----------------------------
     # 📁 Setup
     # -----------------------------
@@ -46,7 +43,17 @@ def main():
         print("[ERROR] No images found in data/input/")
         return
 
-    print(f"[INFO] Found {len(image_files)} image(s)")
+    print(f"[INFO] Total images found: {len(image_files)}")
+
+    # -----------------------------
+    # 🎯 Apply limit logic
+    # -----------------------------
+    if not no_limit:
+        limit = min(limit, len(image_files))
+        image_files = random.sample(image_files, limit)
+        print(f"[INFO] Running on random sample of {limit} images")
+    else:
+        print("[INFO] Running on ALL images")
 
     # -----------------------------
     # 🚀 Initialize Modules
@@ -83,7 +90,7 @@ def main():
             for box in boxes:
                 x1, y1, x2, y2 = box
 
-                # 🔧 Clamp bbox
+                # Clamp bbox
                 x1, y1 = max(0, x1), max(0, y1)
                 x2, y2 = min(w, x2), min(h, y2)
 
@@ -92,10 +99,10 @@ def main():
                 if plate.size == 0:
                     continue
 
-                # 🔧 Preprocess
+                # Preprocess
                 processed_plate = preprocess_plate(plate)
 
-                # 🔡 OCR
+                # OCR + Postprocess
                 raw_text = ocr.extract_text(processed_plate)
                 final_text = process_plate_text(raw_text)
 
@@ -107,11 +114,8 @@ def main():
                 if final_text:
                     final_texts.append(final_text)
 
-                # -----------------------------
-                # 🖍️ Draw Results
-                # -----------------------------
+                # Draw
                 cv2.rectangle(image, (x1, y1), (x2, y2), (0, 255, 0), 2)
-
                 cv2.putText(
                     image,
                     final_text if final_text else raw_text,
@@ -122,21 +126,40 @@ def main():
                     2
                 )
 
-            # Handle no detections
             raw_joined = " | ".join(raw_texts) if raw_texts else "No Plate"
             final_joined = " | ".join(final_texts) if final_texts else "No Plate"
 
             print(f"[RESULT] {img_name} → {final_joined}")
 
-            # Write CSV
             writer.writerow([img_name, raw_joined, final_joined])
 
-            # Save annotated image
+            # Save image
             output_img_path = os.path.join(OUTPUT_DIR, img_name)
             cv2.imwrite(output_img_path, image)
 
     print(f"\n[INFO] Results saved to: {CSV_PATH}")
 
 
+# -----------------------------
+# 🧠 CLI ENTRY
+# -----------------------------
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description="Batch License Plate OCR")
+
+    parser.add_argument(
+        "--limit",
+        type=int,
+        default=20,
+        help="Number of random images to process (default: 20)"
+    )
+
+    parser.add_argument(
+        "--no-limit",
+        action="store_true",
+        help="Process all images"
+    )
+
+    args = parser.parse_args()
+
+    main(limit=args.limit, no_limit=args.no_limit)
+
