@@ -33,9 +33,6 @@ CSV_PATH = os.path.join(OUTPUT_DIR, "results.csv")
 
 
 def main(limit=20, no_limit=False, save_images=False, debug=False):
-    # -----------------------------
-    # 📁 Setup
-    # -----------------------------
     os.makedirs(OUTPUT_DIR, exist_ok=True)
 
     image_files = [
@@ -49,9 +46,6 @@ def main(limit=20, no_limit=False, save_images=False, debug=False):
 
     print(f"[INFO] Total images found: {len(image_files)}")
 
-    # -----------------------------
-    # 🎯 Apply limit logic
-    # -----------------------------
     if not no_limit:
         limit = min(limit, len(image_files))
         image_files = random.sample(image_files, limit)
@@ -59,22 +53,13 @@ def main(limit=20, no_limit=False, save_images=False, debug=False):
     else:
         print("[INFO] Running on ALL images")
 
-    # -----------------------------
-    # 🚀 Initialize Modules
-    # -----------------------------
     detector = PlateDetector("models/plate_detector/best.pt")
     ocr = PlateOCR()
 
-    # -----------------------------
-    # 📝 Prepare CSV
-    # -----------------------------
     with open(CSV_PATH, mode="w", newline="") as file:
         writer = csv.writer(file)
         writer.writerow(["filename", "raw_text", "final_text", "filepath"])
 
-        # -----------------------------
-        # 🔁 Process Each Image
-        # -----------------------------
         for img_name in image_files:
             img_path = os.path.join(INPUT_DIR, img_name)
             image = cv2.imread(img_path)
@@ -94,11 +79,9 @@ def main(limit=20, no_limit=False, save_images=False, debug=False):
             for box in boxes:
                 x1, y1, x2, y2 = box
 
-                # 🔧 Clamp original bbox
                 x1, y1 = max(0, x1), max(0, y1)
                 x2, y2 = min(w, x2), min(h, y2)
 
-                # 🔥 Add padding (CRITICAL FIX)
                 pad_x = int((x2 - x1) * 0.1)
                 pad_y = int((y2 - y1) * 0.2)
 
@@ -113,17 +96,14 @@ def main(limit=20, no_limit=False, save_images=False, debug=False):
                 if plate.size == 0:
                     continue
 
-                # 🔧 Preprocess
                 processed_plate = preprocess_plate(plate)
 
-                # 🧪 DEBUG visualization
                 if debug:
                     plt.imshow(processed_plate, cmap='gray')
                     plt.title("Processed Plate")
                     plt.axis("off")
                     plt.show()
 
-                # 🔡 OCR + Postprocess
                 raw_text = ocr.extract_text(processed_plate)
                 final_text = process_plate_text(raw_text)
 
@@ -135,7 +115,6 @@ def main(limit=20, no_limit=False, save_images=False, debug=False):
                 if final_text:
                     final_texts.append(final_text)
 
-                # 🖍️ Draw original bbox (not padded for clarity)
                 cv2.rectangle(image, (x1, y1), (x2, y2), (0, 255, 0), 2)
                 cv2.putText(
                     image,
@@ -154,7 +133,6 @@ def main(limit=20, no_limit=False, save_images=False, debug=False):
 
             writer.writerow([img_name, raw_joined, final_joined, os.path.relpath(img_path, start=os.getcwd())])
 
-            # 💾 Optional image saving
             if save_images:
                 output_img_path = os.path.join(OUTPUT_DIR, img_name)
                 cv2.imwrite(output_img_path, image)
@@ -162,8 +140,6 @@ def main(limit=20, no_limit=False, save_images=False, debug=False):
     print(f"\n[INFO] Results saved to: {CSV_PATH}")
 
 
-# -----------------------------
-# 🧠 CLI ENTRY
 # -----------------------------
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Batch License Plate OCR")

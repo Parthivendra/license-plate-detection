@@ -56,7 +56,6 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="Test YOLO models")
 
-    # 🔥 Short flags
     parser.add_argument("-v", "--vanilla", action="store_true",
                         help="Use pretrained YOLOv8 model")
 
@@ -72,7 +71,6 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    # 🔥 Logic to decide model
     if args.vanilla:
         model_type = "vanilla"
     elif args.custom:
